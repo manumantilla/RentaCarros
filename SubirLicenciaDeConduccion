@@ -1,0 +1,93 @@
+package RentCarLondra1;
+
+/**
+ *
+ * @author manue
+ */
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import javax.swing.ImageIcon;
+
+import javax.swing.JButton;
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+
+public class SubirLicenciaDeConduccion extends JFrame {
+    private JButton selectButton;
+    private JButton uploadButton;
+
+    public SubirLicenciaDeConduccion() {
+        selectButton = new JButton("Seleccionar archivo");
+        uploadButton = new JButton("Guardar");
+
+        selectButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                JFileChooser fileChooser = new JFileChooser();
+                int returnValue = fileChooser.showOpenDialog(null);
+                if (returnValue == JFileChooser.APPROVE_OPTION) {
+                    File selectedFile = fileChooser.getSelectedFile();
+                    // Aquí puedes realizar alguna validación adicional del archivo seleccionado
+                }
+            }
+        });
+
+        uploadButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                JFileChooser fileChooser = new JFileChooser();
+                int returnValue = fileChooser.showOpenDialog(null);
+                if (returnValue == JFileChooser.APPROVE_OPTION) {
+                    File selectedFile = fileChooser.getSelectedFile();
+                    try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/rentcarlondra", "root", "")) {
+                        String query = "INSERT INTO archivos_pdf (nombre, contenido) VALUES (?, ?)";
+                        try (PreparedStatement statement = connection.prepareStatement(query)) {
+                            statement.setString(1, selectedFile.getName());
+                            statement.setBytes(2, readFileToBytes(selectedFile));
+                            statement.executeUpdate();
+                            JOptionPane.showMessageDialog(null, "Archivo guardado exitosamente en la base de datos.");
+                        }
+                    } catch (SQLException | IOException ex) {
+                        ex.printStackTrace();
+                        JOptionPane.showMessageDialog(null, "Error al guardar el archivo en la base de datos.");
+                    }
+                }
+            }
+        });
+        String imagePath = "C:\\Users\\manue\\Desktop\\RentCarLondra\\build\\classes\\RentCarLondra1\\resources\\licencia.png";
+        ImageIcon imageIcon = new ImageIcon(imagePath);
+        JLabel imageLabel = new JLabel(imageIcon);
+        JPanel panel = new JPanel();
+        panel.add(selectButton);
+        panel.add(imageLabel);
+        panel.add(uploadButton);
+
+        add(panel);
+
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setTitle("Sube tu licencia");
+        pack();
+        setLocationRelativeTo(null);
+        setVisible(true);
+    }
+
+    private byte[] readFileToBytes(File file) throws IOException {
+        try (FileInputStream fis = new FileInputStream(file)) {
+            byte[] buffer = new byte[(int) file.length()];
+            fis.read(buffer);
+            return buffer;
+        }
+    }
+
+    public static void main(String[] args) {
+        new SubirLicenciaDeConduccion();
+    }
+}
