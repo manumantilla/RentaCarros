@@ -1,0 +1,296 @@
+package RentCarLondra1;
+/**
+ * @author manue
+ */
+import java.time.format.DateTimeParseException;
+
+import javax.swing.*;
+import java.awt.*;
+import java.sql.*;
+import javax.swing.table.DefaultTableModel;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.File;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import javax.swing.table.TableColumnModel;
+
+public class CarRentalApp extends JFrame {
+    private JTable carTable;
+    private DefaultTableModel tableModel;
+    private ArrayList<Carro> carros;
+    private JTextField nameField;
+    private JTextField emailField;
+    private JTextField startDateField;
+    private JTextField endDateField;
+
+    private Connection connection;
+
+    public CarRentalApp() {
+        // Configurar la interfaz gráfica
+        setTitle("Alquiler de Carros");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setSize(1000, 500);
+        setLayout(new BorderLayout());
+        //FONDO IMAGEN 
+        
+        // Crear la tabla de carros
+        tableModel = new DefaultTableModel();
+        tableModel.addColumn("ID");
+        tableModel.addColumn("Marca");
+        tableModel.addColumn("Modelo");
+       // tableModel.addColumn("Imagen");
+        tableModel.addColumn("Kilometraje");
+        tableModel.addColumn("Precio por Dia");
+        carTable = new JTable(tableModel);
+
+        // Crear los campos de información personal
+        nameField = new JTextField(20);
+        nameField.setBackground(Color.lightGray);
+        emailField = new JTextField(20);
+        emailField.setBackground(Color.lightGray);
+
+        // Crear los campos de fechas de alquiler
+        startDateField = new JTextField(10);
+        endDateField = new JTextField(10);
+
+        // Crear el botón de guardar
+        JButton saveButton = new JButton("Enviar Solicitud");
+        saveButton.setBackground(Color.orange);
+        //le asignamos un listener a ese boton
+        saveButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                saveData();
+            }
+        });
+
+        // Agregar componentes a la interfaz
+        
+        JPanel topPanel = new JPanel();
+        JPanel middlePanel = new JPanel(new GridLayout(5, 2));
+
+        middlePanel.add(new JLabel("Nombre:"));
+        middlePanel.add(nameField);
+
+        middlePanel.add(new JLabel("Correo electrónico:"));
+        middlePanel.add(emailField);
+
+        JPanel bottomPanel = new JPanel(new GridLayout(2, 2));
+        bottomPanel.add(new JLabel("Fecha de inicio (yy/mm/dd):"));
+        bottomPanel.add(startDateField);
+        bottomPanel.add(new JLabel("Fecha de fin (yy/mm/dd):"));
+        bottomPanel.add(endDateField);
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.add(saveButton);
+        //El border layout nos permite orientar cada texto boton y casilla en coordenadas
+        //norte sur este oeste
+        add(topPanel, BorderLayout.NORTH);
+        add(new JScrollPane(carTable), BorderLayout.CENTER);
+        add(middlePanel, BorderLayout.WEST);
+        add(bottomPanel, BorderLayout.SOUTH);
+        add(buttonPanel, BorderLayout.EAST);
+        
+        pack();
+        setLocationRelativeTo(null);
+
+        // Establecer conexión con la base de datos
+        try {
+            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/rentcarlondra", "root", "");
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Error al conectar a la base de datos.");
+            System.exit(1);
+        }
+
+        // Obtener los carros de la base de datos
+        carros = obtenerCarrosDeBaseDatos();
+        // Llenar la tabla con los datos de los carros
+        llenarTabla();
+    }
+
+    private ArrayList<Carro> obtenerCarrosDeBaseDatos() {
+        ArrayList<Carro> carros = new ArrayList<>();
+
+        try {
+            //statement ejecuta instrucciones a nuestro sql, es como un mensajero 
+            Statement statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery("SELECT * FROM carros");
+               //Este while q busque todos los carros existentes
+            while (resultSet.next()) {
+                int id = resultSet.getInt("id");
+                String marca = resultSet.getString("Marca");
+                String modelo = resultSet.getString("Modelo");
+                String imagen = resultSet.getString("Imagen");
+                int kilometraje = resultSet.getInt("Kilometraje");
+                double precio = resultSet.getDouble("Precio");
+
+                Carro carro = new Carro(id, marca, modelo, imagen, kilometraje, precio);
+                //todos los carros que encuentre los voy metiendo al arraylisy
+                carros.add(carro);
+            }
+        } catch (SQLException error) {
+            error.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Error al obtener los datos de los carros.");
+        }
+
+        return carros;
+    }
+
+    private void llenarTabla() {
+        /*
+        Este for va pasando por cada carro y extrañendo el id la marca etc y va agregando en una nueva fila
+        cada informacion del carro, para esto se crea un objeto llamado
+        rowData
+        */
+        for (Carro carro : carros) {
+            Object[] rowData = {carro.getId(), carro.getMarca(), carro.getModelo(), /*new File(carro.getIma()), */carro.getKilometraje(), carro.getPrice()};
+            tableModel.addRow(rowData);
+        }
+    }
+
+
+    private void saveData() {
+        // Obtener los datos ingresados por el usuario mandando a llamar
+        //todos los datos de cada fila
+        int rowIndex = carTable.getSelectedRow();
+        if (rowIndex == -1) {
+            JOptionPane.showMessageDialog(null, "Seleccione un carro de la tabla.");
+            return;
+        }
+        //Se manda a buscar el carro elegido a traves del objeto Carro
+        Carro carroSeleccionado = carros.get(rowIndex);
+        String name = nameField.getText();
+        String email = emailField.getText();
+        String startDate = startDateField.getText();
+        String endDate = endDateField.getText();
+        String d = startDateField.getText();
+        String f = endDateField.getText();
+        long diastotal=0;
+        //Este if es paara q no este vacio
+        if (d.isEmpty() || f.isEmpty()) {
+            return;
+        }
+        //Este catcha es para contar los dias que la persona va a tener el carro
+        //toca usar este catcha sino no funciona
+        try {
+            //d y f son dia inicial y final para con un parse cambiarlo a el tipo de datetime q necesitamos
+            LocalDate dateBefore = LocalDate.parse(d, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            LocalDate dateAfter = LocalDate.parse(f, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            diastotal = ChronoUnit.DAYS.between(dateBefore, dateAfter);
+            //JOptionPane.showConfirmDialog(rootPane, "El valor a pagat es "+diastotal*45);
+            System.out.println(diastotal);
+        } catch (DateTimeParseException e) {
+            System.out.println("Formato de fecha incorrecto. Asegúrate de ingresar las fechas en el formato dd/mm/aaaa.");
+        }
+
+        // este catcha se usa para insertar los datos en la base de datos asi:
+        /*
+        se usa JDBC java database connectivity
+        la primer linea q dice String query... defien la conlsulta e inserta valores,
+        los ? son marcadores.
+        la  linea de statement es un objeto para hacer consultas parametrizadas
+        y se colcoa el indice para saber a cual marcador corresponde y se guerda una variable
+        
+        */
+        try {
+            String query = "INSERT INTO alquiler_carros (car_id, car_brand, car_model, name, email, start_date, end_date, precio_dias) " +
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+            
+            PreparedStatement statement = connection.prepareStatement(query);
+            statement.setInt(1, carroSeleccionado.getId());
+            statement.setString(2, carroSeleccionado.getMarca());
+            statement.setString(3, carroSeleccionado.getModelo());
+            statement.setString(4, name);
+            statement.setString(5, email);
+            statement.setString(6, startDate);
+            statement.setString(7, endDate);
+            double totalCancelar;
+            //calculo de cuanto tiene que pagar
+            totalCancelar = diastotal* carroSeleccionado.getPrice();
+            statement.setDouble(8, totalCancelar);
+            JOptionPane.showMessageDialog(rootPane, "pagas"+totalCancelar);
+
+            int rowsInserted = statement.executeUpdate();
+            if (rowsInserted > 0) {
+                JOptionPane.showMessageDialog(null, "Datos guardados exitosamente Gracias por Elegirnos dirigite a nuestras oficinas");
+                clearFields();
+            }
+        } catch (SQLException error) {
+            error.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Error al guardar los datos del alquiler");
+        }
+    }
+//Diego- este emtodo es para poner en limpio todos los campos para q ingresen nuevos datos
+    public void clearFields() {
+        nameField.setText("");
+        emailField.setText("");
+        startDateField.setText("");
+        endDateField.setText("");
+        carTable.clearSelection();
+    }
+
+    public static void main(String[] args) {
+        //este invokelater nos permite correr la pagina multipples veces
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                new CarRentalApp().setVisible(true);
+            }
+        });
+    }
+}
+
+class Carro {
+    private int id;
+    private String marca;
+    private String modelo;
+    private String imagen;
+    private int kilometraje;
+    private double precio;
+
+    public Carro(int id, String marca, String modelo, String imagen, int kilometraje, double precio) {
+        this.id = id;
+        this.marca = marca;
+        this.modelo = modelo;
+        this.imagen = imagen;
+        this.kilometraje = kilometraje;
+        this.precio=precio;
+    }
+
+    public double getPrice() {
+        return precio;
+    }
+
+    public void setPrice(double price) {
+        this.precio = price;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public String getMarca() {
+        return marca;
+    }
+
+    public String getModelo() {
+        return modelo;
+    }
+
+    public String getIma() {
+        return imagen;
+    }
+
+    public int getKilometraje() {
+        return kilometraje;
+    }
+
+    public void setKilometraje(int kilometraje) {
+        this.kilometraje = kilometraje;
+    }
+    
+}
+
