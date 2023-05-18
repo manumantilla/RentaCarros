@@ -1,0 +1,84 @@
+
+package RentCarLondra1;
+
+/**
+ *
+ * @author manue
+ */
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.HashMap;
+import java.util.Map;
+
+public class InformacionEmpresa extends JFrame {
+    private JLabel imagenLabel;
+    private JTextArea infoTextArea;
+    private JButton siguienteButton;
+
+    private Map<ImageIcon, String> empresaInfoMap;
+    private ImageIcon[] imagenes;
+    private int indiceImagenActual;
+
+    public InformacionEmpresa() {
+        setTitle("Información de la Empresa");
+        setSize(1220, 800);
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+
+        empresaInfoMap = new HashMap<>();
+        // Asocia cada imagen con la información de la empresa
+        empresaInfoMap.put(new ImageIcon("C:\\Users\\manue\\Desktop\\RentCarLondra\\build\\classes\\RentCarLondra1\\resources\\1.png"), "Información de la Empresa 1");
+        empresaInfoMap.put(new ImageIcon("C:\\Users\\manue\\Desktop\\RentCarLondra\\build\\classes\\RentCarLondra1\\resources\\2.png"), "Información de la Empresa 2");
+        empresaInfoMap.put(new ImageIcon("C:\\Users\\manue\\Desktop\\RentCarLondra\\build\\classes\\RentCarLondra1\\resources\\3.png"), "Información de la Empresa 3");
+
+        // Inicializa el array de imágenes y obtiene la primera imagen
+        imagenes = empresaInfoMap.keySet().toArray(new ImageIcon[0]);
+        indiceImagenActual = 0;
+
+        imagenLabel = new JLabel();
+        infoTextArea = new JTextArea();
+        infoTextArea.setEditable(false);
+
+        siguienteButton = new JButton("Siguiente");
+        siguienteButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                mostrarSiguienteImagen();
+            }
+        });
+        siguienteButton.setBorderPainted(false);
+
+        // Remover el color de fondo
+        siguienteButton.setBackground(new Color(0, 0, 0, 0));
+        setLayout(new BorderLayout());
+        add(imagenLabel, BorderLayout.CENTER);
+        add(infoTextArea, BorderLayout.NORTH);
+        add(siguienteButton, BorderLayout.SOUTH);
+        mostrarSiguienteImagen();
+    }
+
+    private void mostrarSiguienteImagen() {
+        if (indiceImagenActual < imagenes.length) {
+            ImageIcon imagenActual = imagenes[indiceImagenActual];
+            String infoEmpresa = empresaInfoMap.get(imagenActual);
+
+            imagenLabel.setIcon(imagenActual);
+            infoTextArea.setText(infoEmpresa);
+
+            indiceImagenActual++;
+        } else {
+            JOptionPane.showMessageDialog(this, "No hay más imágenes disponibles.", "Fin de la lista", JOptionPane.INFORMATION_MESSAGE);
+        }
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                new InformacionEmpresa().setVisible(true);
+            }
+        });
+    }
+}
