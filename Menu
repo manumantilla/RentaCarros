@@ -1,0 +1,100 @@
+package RentCarLondra1;
+/*
+ * @author manue
+ */
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+public class Menu extends JFrame {
+    private JLabel fotoPerfilLabel;
+
+    public Menu() {
+        setTitle("B I E N V E N I D O ");
+        setSize(600, 300);
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+
+        fotoPerfilLabel = new JLabel(new ImageIcon("C:\\Users\\manue\\Desktop\\RentCarLondra\\build\\classes\\RentCarLondra1\\resources\\perfil.png"));
+
+        JButton boton1 = new JButton("Info Empresa");
+        boton1.setContentAreaFilled(false);
+        boton1.setBorderPainted(false);
+        boton1.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                abrirVentana1();
+            }
+        });
+        
+        
+        JButton boton4 = new JButton("Subir Licencia");
+        boton4.setContentAreaFilled(false);
+        boton4.setBorderPainted(false);
+        boton4.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                abrirVentana4();
+            }
+        });
+        
+        JButton boton3 = new JButton("Conduc Elegido");
+        boton3.setContentAreaFilled(false);
+        boton3.setBorderPainted(false);
+        boton3.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                abrirVentana3();
+            }
+        });
+
+        
+        JButton boton2 = new JButton("Rentar un Carro");        
+        boton2.setContentAreaFilled(false);
+        boton2.setBorderPainted(false);
+        boton2.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                abrirVentana2();
+            }
+        });
+
+        setLayout(new BorderLayout());
+        add(fotoPerfilLabel, BorderLayout.CENTER);
+
+        JPanel panelBotones = new JPanel();
+        panelBotones.add(boton1);
+        panelBotones.add(boton2);
+        panelBotones.add(boton3);
+        panelBotones.add(boton4);
+        add(panelBotones, BorderLayout.SOUTH);
+    }
+    
+    public void abrirVentana2() {
+        CarRentalApp ce = new CarRentalApp();
+        ce.setVisible(true);
+    }
+    private void abrirVentana1() {
+        InformacionEmpresa ventana1 = new InformacionEmpresa();
+        ventana1.setVisible(true);
+    }
+    public void abrirVentana3() {
+        ConductorElegido ventana3 = new ConductorElegido();
+        ventana3.setVisible(true);
+    }
+     public void abrirVentana4() {
+        SubirLicenciaDeConduccion ventana4 = new SubirLicenciaDeConduccion();
+        ventana4.setVisible(true);
+    }
+
+    public static void main(String[] args) {
+    SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+            Menu menu = new Menu();
+            menu.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+            menu.setVisible(true);
+        }
+    });
+}
+}
